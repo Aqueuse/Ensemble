@@ -1,22 +1,24 @@
-﻿# BehaviourSequence 🐒
+﻿# Ensemble 🐒🐒🐒
 
-A lightweight **sequencer for AI behaviours in Unity**, designed for clarity, flexibility, and shareability.  
+A lightweight **sequencer for AI behaviours in Unity**, designed for clarity, flexibility, and modularity.
 It avoids "spaghetti Update()" with if/else and instead lets you define **blocks of actions** that run in order.
 
 ---
 
 ## ✨ Features
 
-- Define a list of **blocks** directly in the Unity inspector.
-- Supports **looping sequences** or **one-time sequences** (toggle with `isLooping`).
-- Includes core AI blocks:
-    - **FollowTransform** → follow a target transform (e.g. group anchor).
-    - **GoToVector3** → move to a specific position.
-    - **PlayAnimation** → trigger an Animator state and wait until it ends.
-    - **WaitForEvent** → pause until a custom event is triggered.
-- Clean event system:
-    - Use `TriggerEvent(string name)` to unblock `WaitForEvent` actions.
-- Modular: add your own blocks easily.
+* Define a list of **AIBlock ScriptableObjects** directly in the Unity inspector.
+* Supports **looping sequences** or **one-time sequences** (`isLooping`).
+* Includes core AI blocks:
+
+    * **FollowTransform** → follow a target until an event stops it.
+    * **GoToTransform** → move to a specific `AITarget` and stop when reached.
+    * **PlayAnimation** → trigger an Animator state and wait until it ends.
+    * **WaitForEvent** → pause until a custom event is triggered.
+* Clean event system:
+
+    * Use `TriggerEvent(string name)` to signal or stop behaviours.
+* Modular: add your own blocks easily by extending `AIBlock`.
 
 ---
 
@@ -26,30 +28,32 @@ It avoids "spaghetti Update()" with if/else and instead lets you define **blocks
 2. Configure the **list of blocks** in the inspector.
 3. Choose **Looping** or **One-Time** via the `isLooping` checkbox.
 
-### Example: Group Following
+### Example: Following the Player
 
 ```text
 Blocks:
-1. FollowTransform (target = groupAnchor)
-2. WaitForEvent (eventName = HasGroupMoved)
+1. FollowTransform (target = player, stopOnEvent = go_fight_monster)
+2. GoToTransform (target = monster)
 [loop enabled]
-→ Agent follows the group, waits for a move event, then continues looping.
+→ Agent follows the player until "go_fight_monster" is triggered,
+   then moves to the monster.
 ```
 
-### Example: One-Time Activity
+### Example: Activity
 
 ```text
 Blocks:
-1. GoToVector3 (target = activity spot)
-2. PlayAnimation (trigger = Eat)
+1. GoToTransform (target = banana spot)
+2. PlayAnimation (trigger = EatBanana)
 [loop disabled]
-→ Agent goes to the activity, plays animation, then sequence ends.
-The activity can then re-enable the default loop behaviour.
+→ Agent goes to the banana spot, plays an animation, then stops.
 ```
+
+---
 
 ## 🎬 Animation Handling
-*PlayAnimation* block triggers an Animator parameter (e.g. trigger `"Eat"`).
 
+*PlayAnimationBlock* triggers an Animator parameter (e.g. trigger `"EatBanana"`).
 The sequence automatically waits until the animation finishes.
 
 Done via Unity’s built-in *OnStateExit* (using a `StateMachineBehaviour`):
@@ -57,47 +61,65 @@ Done via Unity’s built-in *OnStateExit* (using a `StateMachineBehaviour`):
 ```csharp
 public class NotifyOnExit : StateMachineBehaviour {
     public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex) {
-        var seq = animator.GetComponent<BehaviourSequence>();
-        if (seq != null) seq.OnAnimationEnd();
+        var currentBlock = animator.GetComponent<BehaviourSequence>().currentBlock;
+        if (currentBlock is IA.Behaviours.PlayAnimationBlock playBlock) {
+            playBlock.ended = true;
+        }
     }
 }
 ```
 
 Attach `NotifyOnExit` to the relevant Animator states.
 
-## 📡 Events
-Use the *WaitForEvent* block to pause until a signal is received.
+---
 
-Example:
-In the sequence: `WaitForEvent (eventName = HasGroupMoved)`
-From another script:
+## 📡 Events
+
+Events are central to this system:
+
+* Use them to **stop a block** (`FollowTransform` with `stopOnEvent`)
+* Or to **unblock waiting** (`WaitForEvent`).
+
+Example from another script (UI Button, trigger, etc.):
 
 ```csharp
-myAgent.GetComponent<BehaviourSequence>().TriggerEvent("HasGroupMoved");
+myAgent.GetComponent<BehaviourSequence>().TriggerEvent("go_fight_monster");
 ```
+
+BehaviourSequence will then:
+
+* Stop the current block if it matches its `stopOnEvent`.
+* Or resume a waiting block if it was paused.
+
+---
 
 ### 🔁 Loop vs One-Time
 
 *Looping* (`isLooping = true`):
-- When the sequence reaches the end, it restarts at the first block.
-- Perfect for continuous behaviours (like following a group).
+
+* When the sequence reaches the end, it restarts at the first block.
+* Perfect for continuous behaviours (like patrolling or following).
 
 *One-Time* (`isLooping = false`):
-- When the sequence ends, it invokes `onSequenceComplete` and stops.
-- Perfect for activities (like eating a banana).
 
-### 🛠️ Extending
+* When the sequence ends, it simply stops.
+* Perfect for single-shot behaviours (like playing an animation or an activity).
+
+---
+
+## 🛠️ Extending
 
 To add a new block type:
 
-1. Extend the `AIBlockType` enum.
-2. Add fields in `AIBlock` if needed.
-3. Handle it in the switch inside `BehaviourSequence.RunSequence()`.
+1. Create a new `ScriptableObject` class inheriting from `AIBlock`.
+2. Implement the `IEnumerator Execute(AIContext ctx)` method.
+3. Drop it into your sequence list in the inspector.
+
+---
 
 ## ❤️ Contribute
 
 This is a lightweight system, ideal for prototyping or simple AI.
-
-If you like it, please buy me a kofi : https://ko-fi.com/aqueuse ☕
+If you like it, please buy me a kofi : [https://ko-fi.com/aqueuse](https://ko-fi.com/aqueuse) ☕
 
 If you improve or extend it (new block types, bug fixes…), please open a PR! 🐒
