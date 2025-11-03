@@ -1,125 +1,131 @@
-﻿# Ensemble 🐒🐒🐒
+﻿# 🧠 Noddle Flow
 
-A lightweight **sequencer for AI behaviours in Unity**, designed for clarity, flexibility, and modularity.
-It avoids "spaghetti Update()" with if/else and instead lets you define **blocks of actions** that run in order.
+*A playful modular behavior system for Unity*
 
----
-
-## ✨ Features
-
-* Define a list of **AIBlock ScriptableObjects** directly in the Unity inspector.
-* Supports **looping sequences** or **one-time sequences** (`isLooping`).
-* Includes core AI blocks:
-
-    * **FollowTransform** → follow a target until an event stops it.
-    * **GoToTransform** → move to a specific `AITarget` and stop when reached.
-    * **PlayAnimation** → trigger an Animator state and wait until it ends.
-    * **WaitForEvent** → pause until a custom event is triggered.
-* Clean event system:
-
-    * Use `TriggerEvent(string name)` to signal or stop behaviours.
-* Modular: add your own blocks easily by extending `AIBlock`.
+**Noddle Flow** is a lightweight **node-based sequencer** for creating character and AI behaviors.  
+It turns “spaghetti code” into an elegant bowl of logic noodles: every action, every condition, every loop is a node in a flow.
 
 ---
 
-## 🚀 Usage
+## ✨ Core idea
 
-1. Add `BehaviourSequence` to your agent.
-2. Configure the **list of blocks** in the inspector.
-3. Choose **Looping** or **One-Time** via the `isLooping` checkbox.
+Instead of juggling `Update()` calls and nested `if/else`, you build a **graph of actions**.  
+Each **node** represents a step — moving, waiting, playing an animation, or sending an event — and the **executor** handles transitions automatically.
 
-### Example: Following the Player
+---
 
-```text
-Blocks:
-1. FollowTransform (target = player, stopOnEvent = go_fight_monster)
-2. GoToTransform (target = monster)
-[loop enabled]
-→ Agent follows the player until "go_fight_monster" is triggered,
-   then moves to the monster.
+## 🥢 Main features
+
+- **Visual Graph Editor (GraphView-based)**  
+  Create, connect, and test your logic visually in the Unity Editor.
+- **Runtime Executor**  
+  Executes the graph at runtime, node by node, with full coroutine support.
+- **Event System**  
+  Trigger or stop flows using `TriggerEvent(string name)`.
+- **Reusable Blocks**  
+  Each node is a modular `ScriptableObject` — extend, duplicate, remix.
+
+---
+
+## 🍜 Built-in nodes
+
+| Node | Description |
+|------|--------------|
+| **GoToTransform** | Move towards a target until reached. |
+| **FollowTransform** | Continuously follow a target until an event stops it. |
+| **PlayAnimation** | Trigger an Animator state and wait for it to end. |
+| **WaitForEvent** | Pause execution until a custom event is fired. |
+| **WaitSeconds** | Simple timer node for delays or pacing. |
+| **Decision** | Branch the flow toward different outputs based on a numeric condition |
+| **DestroyTarget** | Destroy a gameobject |
+| **Debug** | Show a preset message in the Unity console |
+
+[Extend the system with your own nodes →](#-extending)
+
+---
+
+## 🚀 Getting started
+
+1. Install **Noddle Flow** as a Unity package (UPM git URL coming soon).
+2. Add a **FlowExecutor** component to your scene.
+3. Create a new **FlowGraph** asset and start adding nodes (at least a StartNode and an EndNode ;))
+4. Link your nodes and press *Play*.
+
+### Example
+
+```
+FollowTransform(Player) → WaitEvent(go_fight_monster) → FollowTransform(monster) → PlayAnimation(EatBanana)
 ```
 
-### Example: Activity
-
-```text
-Blocks:
-1. GoToTransform (target = banana spot)
-2. PlayAnimation (trigger = EatBanana)
-[loop disabled]
-→ Agent goes to the banana spot, plays an animation, then stops.
-```
+The agent follows the player, waits for an event, runs to the monster, then eat a banana.
 
 ---
 
-## 🎬 Animation Handling
+## 🎬 Animation integration
 
-*PlayAnimationBlock* triggers an Animator parameter (e.g. trigger `"EatBanana"`).
-The sequence automatically waits until the animation finishes.
-
-Done via Unity’s built-in *OnStateExit* (using a `StateMachineBehaviour`):
+Use a small `StateMachineBehaviour` to signal animation completion:
 
 ```csharp
 public class NotifyOnExit : StateMachineBehaviour {
     public override void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex) {
-        var currentBlock = animator.GetComponent<BehaviourSequence>().currentBlock;
-        if (currentBlock is IA.Behaviours.PlayAnimationBlock playBlock) {
-            playBlock.ended = true;
-        }
+        animator.GetComponent<GraphExecutor>()?.NotifyAnimationEnded();
     }
 }
 ```
 
-Attach `NotifyOnExit` to the relevant Animator states.
+Attach this script to the animation state that ends your action.
 
 ---
 
-## 📡 Events
+## 🔧 Extending
 
-Events are central to this system:
+To add your own block:
 
-* Use them to **stop a block** (`FollowTransform` with `stopOnEvent`)
-* Or to **unblock waiting** (`WaitForEvent`).
-
-Example from another script (UI Button, trigger, etc.):
+### Create a node on Editor/FlowNoddles :
 
 ```csharp
-myAgent.GetComponent<BehaviourSequence>().TriggerEvent("go_fight_monster");
+[CreateAssetMenu(menuName="NoddleFlow/Nodes/MyCustomNode")]
+public class MyCustomNode : BaseNode {
+    protected override void OnDefinePorts(IPortDefinitionContext context) {
+        // Add your own ports here
+
+        context.AddInputPort<bool>("TriggerIn").Build();
+        context.AddOutputPort<bool>("TriggerOut").Build();
+    }
+
+    public override AiBlockExecutor ConvertToExecutor(AiRuntimeGraph aiRuntimeGraph) {
+    
+        // Create the executable version of your  node here
+
+        // Add the ports to the appropriate GenericDictionnary
+        // in AiRuntimeGraph
+    }
+}
 ```
 
-BehaviourSequence will then:
+Then drop it in your graph and connect it like any other node.
 
-* Stop the current block if it matches its `stopOnEvent`.
-* Or resume a waiting block if it was paused.
+#### Create his executable
 
----
+Create his runtime behavior in Assets/Scripts/NoddleFlow/Behaviours
 
-### 🔁 Loop vs One-Time
+```csharp
+    public class MyCustomNodeExecutor : AiBlockExecutor {
+        public string myVariableUuid;
+        
+        public override async Task Execute(GraphExecutor graphExecutor) {
+            // the runtime behaviour of your node (use the variables stored on the 
+            // data on the AiRuntimeGraph genericDictionnaries
 
-*Looping* (`isLooping = true`):
-
-* When the sequence reaches the end, it restarts at the first block.
-* Perfect for continuous behaviours (like patrolling or following).
-
-*One-Time* (`isLooping = false`):
-
-* When the sequence ends, it simply stops.
-* Perfect for single-shot behaviours (like playing an animation or an activity).
-
----
-
-## 🛠️ Extending
-
-To add a new block type:
-
-1. Create a new `ScriptableObject` class inheriting from `AIBlock`.
-2. Implement the `IEnumerator Execute(AIContext ctx)` method.
-3. Drop it into your sequence list in the inspector.
+            await graphExecutor.runtimeGraph.executors[outputUuidTrigger].Execute(graphExecutor);
+        }
+    }
+```
 
 ---
 
-## ❤️ Contribute
+## ❤️ Credits & contribution
 
-This is a lightweight system, ideal for prototyping or simple AI.
-If you like it, please buy me a kofi : [https://ko-fi.com/aqueuse](https://ko-fi.com/aqueuse) ☕
-
-If you improve or extend it (new block types, bug fixes…), please open a PR! 🐒
+Created with love (and too many noodles) by **Ours Agile Studio**.  
+If you enjoy it, consider offering a coffee: [https://ko-fi.com/aqueuse](https://ko-fi.com/aqueuse) ☕  
+Pull requests, new node ideas, and bug hunts are always welcome!

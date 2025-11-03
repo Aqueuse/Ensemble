@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
 
-public class AITarget : MonoBehaviour {
+public class AiTarget : MonoBehaviour {
     public string uuid;
 }

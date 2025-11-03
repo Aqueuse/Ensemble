@@ -22,7 +22,7 @@ namespace Behaviours {
         public bool ended;
         
         public override async Task Execute(GraphExecutor graphExecutor) {
-            var associatedTargets = FindObjectsByType<AITarget>(FindObjectsSortMode.None);
+            var associatedTargets = FindObjectsByType<AiTarget>(FindObjectsSortMode.None);
             
             if (associatedTargets.Length == 0) {
                 Debug.LogError("AITarget not found on scene. Please add one as a component of your target GameObject");

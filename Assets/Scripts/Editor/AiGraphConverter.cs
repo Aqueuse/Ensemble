@@ -1,5 +1,4 @@
-using Editor.AiNodes;
-using Editor.AiNodes.variables;
+using Editor.FlowNoddles;
 using Unity.GraphToolkit.Editor;
 using UnityEditor;
 using UnityEngine;

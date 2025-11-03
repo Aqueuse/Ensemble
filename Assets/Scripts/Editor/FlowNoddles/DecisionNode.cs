@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Behaviours;
-using Editor.AiNodes.variables;
+using Editor.FlowNoddles.variables;
 using Unity.GraphToolkit.Editor;
 using UnityEngine;
 
-namespace Editor.AiNodes {
+namespace Editor.FlowNoddles {
     [Serializable]
     public class DecisionNode : BaseNode {
         private const string optionId = "portCount";

@@ -1,7 +1,6 @@
-﻿using System;
-using Unity.GraphToolkit.Editor;
+﻿using Unity.GraphToolkit.Editor;
 
-namespace Editor.AiNodes.variables {
+namespace Editor.FlowNoddles.variables {
     public class StringVariableNode : Node {
         protected override void OnDefinePorts(IPortDefinitionContext context) {
             context.AddOutputPort<string>("variable").Build();

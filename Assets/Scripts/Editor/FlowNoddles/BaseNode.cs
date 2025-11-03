@@ -2,7 +2,7 @@
 using Behaviours;
 using Unity.GraphToolkit.Editor;
 
-namespace Editor.AiNodes {
+namespace Editor.FlowNoddles {
     public class BaseNode : Node {
         public readonly string uuid = Guid.NewGuid().ToString();
         

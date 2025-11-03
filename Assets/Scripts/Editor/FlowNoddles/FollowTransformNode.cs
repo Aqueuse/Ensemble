@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using Behaviours;
-using Editor.AiNodes.variables;
+using Editor.FlowNoddles.variables;
 using Unity.GraphToolkit.Editor;
 using UnityEngine;
 
-namespace Editor.AiNodes {
+namespace Editor.FlowNoddles {
     [Serializable]
     public class FollowTransformNode : BaseNode {
         protected override void OnDefinePorts(IPortDefinitionContext context) {
@@ -51,9 +51,9 @@ namespace Editor.AiNodes {
             executor.aiAgentUuid = aiAgentUuid;
             executor.isFollowingBoolUuid = isFollowingBoolUuid;
 
-            aiRuntimeGraph.stringData.TryAdd(executor.aiTargetUuid, aiTargetUuidValue);
-            aiRuntimeGraph.stringData.TryAdd(executor.aiAgentUuid, aiAgentUuidValue);
-            aiRuntimeGraph.boolData.TryAdd(executor.isFollowingBoolUuid, isFollowingValue);
+            aiRuntimeGraph.stringData.TryAdd(aiTargetUuid, aiTargetUuidValue);
+            aiRuntimeGraph.stringData.TryAdd(aiAgentUuid, aiAgentUuidValue);
+            aiRuntimeGraph.boolData.TryAdd(isFollowingBoolUuid, isFollowingValue);
             
             return executor;
         }

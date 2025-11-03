@@ -1,15 +1,14 @@
-﻿using System;
-using Unity.GraphToolkit.Editor;
+﻿using Unity.GraphToolkit.Editor;
 
-namespace Editor.AiNodes.variables {
-    public class FloatVariableNode : Node {
+namespace Editor.FlowNoddles.variables {
+    public class BoolVariableNode : Node {
         protected override void OnDefinePorts(IPortDefinitionContext context) {
-            context.AddOutputPort<float>("variable").Build();
+            context.AddOutputPort<bool>("variable").Build();
         }
         
         protected override void OnDefineOptions(IOptionDefinitionContext context) {
             context.AddOption<string>(name: "uuid").ShowInInspectorOnly().Build();
-            context.AddOption<float>(name: "value").ShowInInspectorOnly().Build();
+            context.AddOption<bool>(name: "value").ShowInInspectorOnly().Build();
         }
     }
 }

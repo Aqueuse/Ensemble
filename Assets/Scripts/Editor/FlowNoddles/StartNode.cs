@@ -3,7 +3,7 @@ using Behaviours;
 using Unity.GraphToolkit.Editor;
 using UnityEngine;
 
-namespace Editor.AiNodes {
+namespace Editor.FlowNoddles {
     [Serializable]
     public class StartNode : BaseNode {
         protected override void OnDefinePorts(IPortDefinitionContext context) {
