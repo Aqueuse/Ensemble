@@ -5,6 +5,8 @@
 **Noddle Flow** is a lightweight **node-based sequencer** for creating character and AI behaviors.  
 It turns “spaghetti code” into an elegant bowl of logic noodles: every action, every condition, every loop is a node in a flow.
 
+![An example of node AI behaviours with differents nodes](https://raw.githubusercontent.com/Aqueuse/NoddleFlow/refs/heads/master/noodleFlowUI.png)
+
 ---
 
 ## ✨ Core idea
